@@ -1,5 +1,7 @@
 
-InBetWin! (Still-in-progress)
+InBetWin v2.0! (Still-in-progress, estimated completion: 40%)
+
+- This is our entry from the last Google DevFest NYC Hackathon that was not finished. I'm currently rebuilding it from the ground up as my personal project.
 
 
 A simple multiplayer card game in which the only thing you need to do is to guess the dealer's card if it's in between your two cards. 
