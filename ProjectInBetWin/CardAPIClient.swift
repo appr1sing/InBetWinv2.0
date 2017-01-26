@@ -19,7 +19,7 @@ struct CardAPIClient {
         
         let configuration = URLSessionConfiguration.default
         let session = URLSession(configuration: configuration)
-        let url = URL(string: "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1")
+        let url = URL(string: "https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=2")
         let task = session.dataTask(with: url!) { data, error , response in
             
             guard let data = data else { fatalError() }
@@ -45,6 +45,7 @@ struct CardAPIClient {
             let responseJSON = try? JSONSerialization.jsonObject(with: data, options: []) as! firebaseJSON
             if let json = responseJSON {
                 OperationQueue.main.addOperation {
+                    print(json)
                     completion(json)
                 }
             }

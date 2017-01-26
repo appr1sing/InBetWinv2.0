@@ -8,6 +8,12 @@
 
 import UIKit
 
+protocol PlayerOptionButtonsDelegate : class {
+    func betButtonTapped(with sender: PlayersTableView)
+    func foldButtonTapped(with sender: PlayersTableView)
+}
+
+
 class PlayersTableView: UIView {
 
     let firstContainerView = UIView()
@@ -28,6 +34,8 @@ class PlayersTableView: UIView {
     var addButton : UIButton!
     var amountLabel : UILabel!
  
+    weak var delegate : PlayerOptionButtonsDelegate?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         commonInit()
@@ -35,6 +43,10 @@ class PlayersTableView: UIView {
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func setNeedsDisplay() {
+        super.setNeedsDisplay()
     }
     
     public func commonInit() {
@@ -146,13 +158,13 @@ class PlayersTableView: UIView {
         foldButton.setTitleColor(UIColor.white, for: .normal)
         foldButton.titleLabel?.textAlignment = .center
         foldButton.titleLabel?.font = UIFont(name: "AvenirNext-Regular", size: 20)
-        foldButton.addTarget(self, action: #selector(self.testFoldButton(sender:)), for: .touchUpInside)
+        foldButton.addTarget(self, action: #selector(self.foldButtonTapped), for: .touchUpInside)
         
         betButton.setTitle("BET", for: .normal)
         betButton.setTitleColor(UIColor.white, for: .normal)
         betButton.titleLabel?.textAlignment = .center
         betButton.titleLabel?.font = UIFont(name: "AvenirNext-Regular", size: 20)
-        betButton.addTarget(self, action: #selector(self.testFoldButton(sender:)), for: .touchUpInside)
+        betButton.addTarget(self, action: #selector(self.betButtonTapped), for: .touchUpInside)
         
         addButton.setTitle("+", for: .normal)
         addButton.setTitleColor(UIColor.white, for: .normal)
@@ -174,8 +186,13 @@ class PlayersTableView: UIView {
     
     }
     
-    func testFoldButton(sender: UIButton) {
+    func foldButtonTapped() {
+        delegate?.foldButtonTapped(with: self)
         
+    }
+    
+    func betButtonTapped() {
+        delegate?.betButtonTapped(with: self)
     }
     
     func addBet(sender: UIButton) {
@@ -187,6 +204,63 @@ class PlayersTableView: UIView {
         let value : Int = Int(amountLabel.text!)!
         if value <= 0 { return }
         amountLabel.text = String(value - 5)
+    }
+    
+    
+    public func animate(with imageData1: String, imageData2: String) {
+        
+        // create a 'tuple' (a pair or more of objects assigned to a single variable)
+        frontViewFirstCard.frame = backViewFirstCard.frame
+        
+        let imgUrl1 = URL(string: imageData1)
+        let dataImg1 = try! Data(contentsOf: imgUrl1!)
+        frontViewFirstCard.image = UIImage(data: dataImg1)
+        
+        let imgUrl2 = URL(string: imageData2)
+        let dataImg2 = try! Data(contentsOf: imgUrl2!)
+        frontViewSecondCard.image = UIImage(data: dataImg2)
+        frontViewSecondCard.frame = backViewSecondCard.frame
+        
+        addSubview(frontViewFirstCard)
+        addSubview(frontViewSecondCard)
+        
+        let view1 = (frontView: frontViewFirstCard, backView: backViewFirstCard)
+        let view2 = (frontView: frontViewSecondCard, backView: backViewSecondCard)
+        
+        
+        // set a transition style
+        let transitionOptions1 = UIViewAnimationOptions.transitionFlipFromRight
+        let transitionOptions2 = UIViewAnimationOptions.transitionFlipFromLeft
+        
+        UIView.transition(with: self.firstContainerView, duration: 1.0, options: transitionOptions1, animations: {
+            // remove the front object...
+            view1.frontView.removeFromSuperview()
+            
+            // ... and add the other object
+            self.firstContainerView.addSubview(view1.frontView)
+            
+            
+        }, completion: { finished in
+            // any code entered here will be applied
+            // .once the animation has completed
+        })
+        
+        
+        UIView.transition(with: self.secondContainerView, duration: 1.0, options: transitionOptions2, animations: {
+            // remove the front object...
+            view2.frontView.removeFromSuperview()
+            
+            // ... and add the other object
+            self.secondContainerView.addSubview(view2.frontView)
+            
+            
+        }, completion: { finished in
+            // any code entered here will be applied
+            // .once the animation has completed
+        })
+        
+        
+        
     }
     
     

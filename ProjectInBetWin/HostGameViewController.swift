@@ -15,6 +15,7 @@ class HostGameViewController: UIViewController {
     
     let firebase = FirebaseModel()
     let deck = Deck()
+    let apiClient = CardAPIClient.shared
     
     var playerTableView : PlayersTableView!
     var deckID : String?
@@ -27,17 +28,52 @@ class HostGameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupTableView()
-        setupNavBarItems()
-        if hostPlayer { addHost() }
-        notifyFirebase()
-        alertView.delegate = self
-        
+        setupViews()
+        setupMechanics()
+        setupDelegates()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         hostTableView.reloadData()
+    }
+    
+    func setupViews() {
+        setupTableView()
+        setupNavBarItems()
+    }
+    
+    func setupMechanics() {
+        verifyHostStatus()
+        notifyFirebase()
+        notifyPlayersTurn()
+    }
+    
+    func setupDelegates() {
+        alertView.delegate = self
+        playerTableView.delegate = self
+    }
+    
+    func verifyHostStatus() {
+        
+        if hostPlayer {
+            
+            addHost()
+            
+        } else {
+            
+            firebase.getDeckID(hostedBy: host!, with: { deckID in
+                print("\nDECK ID FROM FIREBASE \(deckID)\n")
+                self.deckID = deckID
+                self.deck.retrieveDeck(deckID, with: { success in
+                    
+                    print("\n REMAINING CARDS : \(self.deck.remaining)")
+                    
+                })
+                
+            })
+        }
+        
     }
     
     func addHost() {
@@ -64,7 +100,19 @@ class HostGameViewController: UIViewController {
                 let user = Player(dictionary: result)
                 self.newPlayers.append(user)
                 self.hostTableView.insertRows(at: [IndexPath(row: self.newPlayers.count - 1, section: 0)], with: .fade)
-                if self.newPlayers.count > 1 { self.alertView.hide() }
+                
+                
+                
+                if self.newPlayers.count == 1 && self.hostPlayer {
+                    self.alertView.notifyToWaitForOtherPlayers()
+                } else if self.newPlayers.count > 1 && self.hostPlayer {
+                    self.alertView.hideNotificationLabel()
+                    self.alertView.addReadyButton()
+                } else if self.newPlayers.count > 1 && !self.hostPlayer {
+                    self.alertView.notifyPlayerJoined(user.firstName)
+                }
+                
+                
                 
             })
             
@@ -78,12 +126,19 @@ class HostGameViewController: UIViewController {
                 
                 self.newPlayers.remove(at: index)
                 self.hostTableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .fade)
-                if self.newPlayers.count == 1 { self.alertView.unHide() }
+                
+                if self.newPlayers.count == 1 {
+                    self.hostPlayer = true
+                    self.alertView.notifyToWaitForOtherPlayers()
+                }
+                
+                if self.newPlayers.count > 1 && (self.hostPlayer || !self.hostPlayer) {
+                    self.alertView.notifyPlayerLeft(self.newPlayers[index].firstName)
+                }
                 
             }
             
         })
-        
         
        
     }
@@ -93,23 +148,101 @@ class HostGameViewController: UIViewController {
 extension HostGameViewController : AlertViewDelegate {
     
     func readyButtonTapped(with sender: AlertView) {
+        
         alertView.hideReadyButton()
+        
         if let host = host {
             
-            firebase.addPlayerStatusToGame(hostedBy: host)
-            
             if hostPlayer {
-                firebase.selectRandomPlayer(hostedBy: host)
-            }
+                
+                firebase.selectRandomPlayer(hostedBy: host, with: { randomPlayer in
+                    
+                    for player in self.newPlayers {
+                        if player.uid == randomPlayer {
+                            self.alertView.displayPlayerName(player.firstName)
+                        }
+                    }
+                    
+                })
+                
+                
+            } 
         }
         
     }
 
-    func generateRandom() {
-        print("TEST")
+    func notifyPlayersTurn() {
+        
+        let playerRef = firebase.rootRef.child("current_games").child("\(host!)")
+        
+        playerRef.observe(.value, with: { snapshot in
+            
+            guard let result = snapshot.value as? firebaseJSON else { return }
+            guard let playerName = result["playerTurnToBet"] as? String else { return }
+            
+            if self.firebase.uid == playerName {
+                
+                self.alertView.displaySelfName()
+                self.playerTableView.isUserInteractionEnabled = true
+                if let deckID = self.deckID {
+                    
+                    self.deck.drawCards(deckID, numberOfCards: 3, handler: { success, cards in
+                        
+                        for card in cards! {
+                            print("\(card.suit)  \(card.value)")
+                        }
+                        
+                    })
+                    
+                }
+                
+            } else { 
+                
+                for player in self.newPlayers {
+                    
+                    if player.uid == playerName {
+                        self.alertView.displayPlayerName(player.firstName)
+                    }
+                }
+                
+                self.playerTableView.isUserInteractionEnabled = false
+                
+            }
+            
+        })
     }
     
 }
+
+extension HostGameViewController : PlayerOptionButtonsDelegate {
+    
+    func betButtonTapped(with sender: PlayersTableView) {
+        print("BET")
+        
+        firebase.getRandomPlayer(hostedBy: host!, with: { currentPlayer in
+            
+            for (index,player) in self.newPlayers.enumerated() {
+                let next = index + 1
+                if player.uid == currentPlayer && next != self.newPlayers.count {
+                    self.firebase.nextPlayerToBet(hostedBy: self.host!, uid: self.newPlayers[next].uid)
+                } else if player.uid == currentPlayer && next >= self.newPlayers.count {
+                    self.firebase.nextPlayerToBet(hostedBy: self.host!, uid: self.newPlayers[0].uid)
+                }
+                
+            }
+            
+        })
+        
+    }
+    
+    func foldButtonTapped(with sender: PlayersTableView) {
+        print("FOLD")
+        playerTableView.animate(with: deck.cards[0].imageURLString, imageData2: deck.cards[1].imageURLString)
+    }
+    
+    
+}
+
 
 extension HostGameViewController : UITableViewDataSource, UITableViewDelegate {
     
@@ -178,10 +311,13 @@ extension HostGameViewController : UITableViewDataSource, UITableViewDelegate {
     
     func dismissVC() {
         if let host = host {
+            hostPlayer = false
             firebase.leaveGame(hostedBy: host)
             firebase.checkIfThereIsPlayersInGame(with: host)
             dismiss(animated: true, completion: nil)
         }
     }
+    
+    
     
 }

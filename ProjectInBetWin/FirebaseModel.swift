@@ -113,24 +113,53 @@ class FirebaseModel {
         
     }
     
-    public func selectRandomPlayer(hostedBy roomName: String) {
+    public func selectRandomPlayer(hostedBy roomName: String, with completion: @escaping (String) -> ()) {
         let playerRef = self.rootRef.child("current_games/\(roomName)/players")
         
         playerRef.observeSingleEvent(of: .value, with: { snapshot in
             
             guard let results = snapshot.value as? firebaseJSON else { return }
             var players = [String]()
-            for (key, value) in results {
-                print(key)
+            for (key, _) in results {
                 players.append(key)
             }
             let index = Int(arc4random_uniform(UInt32(players.count)))
             let randomPlayer = players[index]
             self.rootRef.child("current_games/\(roomName)/playerTurnToBet").setValue(randomPlayer)
             
+            completion(randomPlayer)
+        
         })
         
+    }
+    
+    public func getRandomPlayer(hostedBy roomName: String, with completion: @escaping (String) -> ()) {
         
+        let playerRef = self.rootRef.child("current_games/\(roomName)/playerTurnToBet")
+        
+        playerRef.observeSingleEvent(of: .value, with: { snapshot in
+        
+            guard let result = snapshot.value as? String else { return }
+            completion(result)
+            
+        })
+        
+    }
+ 
+    public func getDeckID(hostedBy roomName: String, with completion: @escaping (String) -> ()) {
+        
+        let playerRef = self.rootRef.child("current_games/\(roomName)/deckID")
+        playerRef.observeSingleEvent(of: .value, with: { snapshot in
+            guard let result = snapshot.value as? String else { return }
+            completion(result)
+        })
+        
+    }
+    
+    public func nextPlayerToBet(hostedBy roomName: String, uid: String) {
+        
+        let playerRef = self.rootRef.child("current_games/\(roomName)/playerTurnToBet")
+        playerRef.setValue(uid)
     }
     
 }

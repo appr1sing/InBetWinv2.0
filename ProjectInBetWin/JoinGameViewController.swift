@@ -23,8 +23,8 @@ class JoinGameViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        retrieveGamesFromFirebase()
-        self.joinTableView.reloadData()
+        //retrieveGamesFromFirebase()
+        //self.joinTableView.reloadData()
     }
     
     private func setupViews() {
@@ -33,7 +33,7 @@ class JoinGameViewController: UIViewController {
     }
     
     private func setupFireBase() {
-        retrieveGamesFromFirebase()
+        //retrieveGamesFromFirebase()
         NotifyFirebase()
     }
     
@@ -41,17 +41,18 @@ class JoinGameViewController: UIViewController {
         
         firebaseModel.rootRef.child("current_games").observe(.childAdded, with: { snapshot in
             
-            guard let game = snapshot.value as? String else { return }
+            guard let game = snapshot.key as? String else { return }
             self.games.append(game)
             if let index = self.games.index(of: game) {
                 self.joinTableView.insertRows(at: [IndexPath(row: index, section: 0)], with: .fade)
                 self.joinTableView.reloadData()
             }
+            
         })
         
         firebaseModel.rootRef.child("current_games").observe(.childRemoved, with: { snapshot in
             
-            guard let game = snapshot.value as? String else { return }
+            guard let game = snapshot.key as? String else { return }
             if let index = self.games.index(of: game) {
                 self.games.remove(at: index)
                 self.joinTableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .fade)

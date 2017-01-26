@@ -31,6 +31,10 @@ class AlertView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
     }
+    
+    override func setNeedsDisplay() {
+        super.setNeedsDisplay()
+    }
 
     private func commonInit() {
         
@@ -38,7 +42,6 @@ class AlertView: UIView {
         
         notificationLabel = UILabel(frame: CGRect(x: 0.0, y: 0.0, width: self.frame.width * 0.7, height: self.frame.width * 0.2))
         notificationLabel.numberOfLines = 0
-        notificationLabel.text = "WAITING FOR OTHER PLAYERS..."
         notificationLabel.textColor = UIColor.white
         notificationLabel.font = UIFont(name: "AvenirNext-UltraLight", size: 25)
         notificationLabel.textAlignment = .center
@@ -48,24 +51,35 @@ class AlertView: UIView {
         
     }
     
+    func notifyToWaitForOtherPlayers() {
+        
+        notificationLabel.text = "Waiting for other players"
+        UIView.animate(withDuration: 1.0, delay: 0.0, options: .curveEaseInOut, animations: {
+            self.alpha = 1.0
+            self.notificationLabel.alpha = 1.0
+            
+        }, completion: nil)
+        
+    }
     
     
-    func hide() {
+    func hideNotificationLabel() {
         
         UIView.animate(withDuration: 0.4, delay: 0.1, options: .curveEaseInOut, animations: {
             
             self.notificationLabel.alpha = 0.0
             
-        }, completion: { _ in self.addReadyButton() })
+        }, completion: nil)
         
     }
     
     func unHide() {
         
         readyButton.removeFromSuperview()
-        
+        notificationLabel.text = "Waiting for other players..."
         UIView.animate(withDuration: 0.4, delay: 0.1, options: .curveEaseInOut, animations: {
             
+            self.alpha = 1.0
             self.notificationLabel.alpha = 1.0
             
             
@@ -105,7 +119,61 @@ class AlertView: UIView {
         
     }
     
+    func displayPlayerName(_ name: String) {
+        
+        readyButton.removeFromSuperview()
+        notificationLabel.text = "\(name)'s turn to bet."
+        UIView.animate(withDuration: 1.0, delay: 0.0, options: .curveEaseInOut, animations: {
+            self.alpha = 1.0
+            self.notificationLabel.alpha = 1.0
+            
+        }, completion: { _ in self.removeView() })
+        
+    }
     
+    func displaySelfName() {
+        
+        readyButton.removeFromSuperview()
+        notificationLabel.text = "Your turn to bet."
+        UIView.animate(withDuration: 1.0, delay: 0.0, options: .curveEaseInOut, animations: {
+            self.alpha = 1.0
+            self.notificationLabel.alpha = 1.0
+            
+        }, completion: { _ in self.removeView() })
+        
+    }
     
+    func removeView() {
+        
+        UIView.animate(withDuration: 1.0, delay: 1.0, options: .curveEaseInOut, animations: {
+            self.alpha = 0.0
+        }, completion: nil)
+        
+    }
+    
+    func notifyPlayerLeft(_ name: String) {
+        
+        readyButton.removeFromSuperview()
+        notificationLabel.text = "\(name) has left the game."
+        
+        UIView.animate(withDuration: 1.0, delay: 1.0, options: .curveEaseInOut, animations: {
+            self.alpha = 1.0
+            self.notificationLabel.alpha = 1.0
+        }, completion: { _ in self.removeView()
+            
+        })
+        
+    }
+    
+    func notifyPlayerJoined(_ name: String) {
+        
+        notificationLabel.text = "\(name) has joined the game."
+        UIView.animate(withDuration: 1.0, delay: 1.0, options: .curveEaseInOut, animations: {
+            self.alpha = 1.0
+            self.notificationLabel.alpha = 1.0
+        }, completion: { _ in self.removeView()
+            
+        })
+    }
     
 }
