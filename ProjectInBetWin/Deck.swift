@@ -78,4 +78,10 @@ class Deck {
         
     }
     
+    deinit {
+        self.deckID = nil
+        self.remaining = nil
+        self.cards = []
+    }
+    
 }

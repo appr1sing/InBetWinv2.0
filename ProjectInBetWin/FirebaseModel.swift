@@ -15,6 +15,7 @@ class FirebaseModel {
     let rootRef = FIRDatabase.database().reference().child("game")
     let uid = FIRAuth.auth()?.currentUser?.uid
     
+    
     public func registerPlayer(_ uid: String, email: String, firstName: String, lastName: String, status: Bool, photoURL: String) {
         
         let playerRef = rootRef.child("players/\(uid)")
@@ -92,13 +93,25 @@ class FirebaseModel {
         
     }
     
-    public func addTokenToUser() {
+    public func checkIfUserHasChips(with completion: @escaping (Bool) -> ()) {
         
-        let playerRef = self.rootRef.child("players/\(uid!)/tokens")
-        playerRef.setValue(100)
+        let playerRef = self.rootRef.child("players/\(uid!)")
+        
+        playerRef.observe( .value, with: { snapshot in
+            
+            guard let result = snapshot.value as? firebaseJSON else { return }
+            
+            if result["tokens"] != nil {
+                completion(true)
+            } else {
+                playerRef.updateChildValues(["tokens" : 100])
+            }
+        })
+        
         
     }
     
+
     public func addHostToCurrentGame(with deckID: String, hostName: String) {
         
         let gameRef = self.rootRef.child("current_games/\(hostName)/deckID")
@@ -161,6 +174,8 @@ class FirebaseModel {
         let playerRef = self.rootRef.child("current_games/\(roomName)/playerTurnToBet")
         playerRef.setValue(uid)
     }
+    
+    
     
 }
 

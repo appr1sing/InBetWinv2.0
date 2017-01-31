@@ -45,7 +45,6 @@ struct CardAPIClient {
             let responseJSON = try? JSONSerialization.jsonObject(with: data, options: []) as! firebaseJSON
             if let json = responseJSON {
                 OperationQueue.main.addOperation {
-                    print(json)
                     completion(json)
                 }
             }

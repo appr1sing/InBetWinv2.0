@@ -53,6 +53,7 @@ class AlertView: UIView {
     
     func notifyToWaitForOtherPlayers() {
         
+        readyButton.removeFromSuperview()
         notificationLabel.text = "Waiting for other players"
         UIView.animate(withDuration: 1.0, delay: 0.0, options: .curveEaseInOut, animations: {
             self.alpha = 1.0

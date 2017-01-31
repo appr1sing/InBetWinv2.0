@@ -115,7 +115,6 @@ extension JoinGameViewController : UITableViewDataSource, UITableViewDelegate {
         let vc = UIStoryboard(name:"Main", bundle:nil).instantiateViewController(withIdentifier: "hostVC") as! HostGameViewController
         vc.host = games[indexPath.row]
         firebaseModel.addPlayerToGame(hostedBy: games[indexPath.row])
-        
         let navigationVC = UINavigationController(rootViewController: vc)
         present(navigationVC, animated: true, completion: nil)
         

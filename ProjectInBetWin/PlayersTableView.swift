@@ -11,6 +11,8 @@ import UIKit
 protocol PlayerOptionButtonsDelegate : class {
     func betButtonTapped(with sender: PlayersTableView)
     func foldButtonTapped(with sender: PlayersTableView)
+    func amountLabelTapped(with sender: PlayersTableView)
+    
 }
 
 
@@ -33,6 +35,8 @@ class PlayersTableView: UIView {
     var minusButton : UIButton!
     var addButton : UIButton!
     var amountLabel : UILabel!
+    var potLabel : UILabel!
+    var moneyLabel : UILabel!
  
     weak var delegate : PlayerOptionButtonsDelegate?
     
@@ -149,6 +153,22 @@ class PlayersTableView: UIView {
         amountLabel.bottomAnchor.constraint(equalTo: foldButton.topAnchor).isActive = true
         amountLabel.heightAnchor.constraint(equalToConstant: 70).isActive = true
         
+        potLabel = UILabel()
+        addSubview(potLabel)
+        potLabel.translatesAutoresizingMaskIntoConstraints = false
+        potLabel.leftAnchor.constraint(equalTo: leftAnchor).isActive = true
+        potLabel.bottomAnchor.constraint(equalTo: minusButton.topAnchor).isActive = true
+        potLabel.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.5).isActive = true
+        potLabel.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        
+        moneyLabel = UILabel()
+        addSubview(moneyLabel)
+        moneyLabel.translatesAutoresizingMaskIntoConstraints = false
+        moneyLabel.leftAnchor.constraint(equalTo: potLabel.rightAnchor).isActive = true
+        moneyLabel.rightAnchor.constraint(equalTo: rightAnchor).isActive = true
+        moneyLabel.bottomAnchor.constraint(equalTo: minusButton.topAnchor).isActive = true
+        moneyLabel.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        
         
     }
     
@@ -157,7 +177,7 @@ class PlayersTableView: UIView {
         foldButton.setTitle("FOLD", for: .normal)
         foldButton.setTitleColor(UIColor.white, for: .normal)
         foldButton.titleLabel?.textAlignment = .center
-        foldButton.titleLabel?.font = UIFont(name: "AvenirNext-Regular", size: 20)
+        foldButton.titleLabel?.font = UIFont(name: "AvenirNext-UltraLight", size: 20)
         foldButton.addTarget(self, action: #selector(self.foldButtonTapped), for: .touchUpInside)
         
         betButton.setTitle("BET", for: .normal)
@@ -180,10 +200,32 @@ class PlayersTableView: UIView {
         
         amountLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
         amountLabel.textColor = UIColor.white
-        amountLabel.font = UIFont(name: "AvenirNext-Regular", size: 30)
+        amountLabel.font = UIFont(name: "AvenirNext-Regular", size: 20)
         amountLabel.text = "10"
         amountLabel.textAlignment = .center
+        amountLabel.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(self.amountLabelTapped(_:)))
+        tap.numberOfTapsRequired = 1
+        amountLabel.addGestureRecognizer(tap)
+        
     
+        potLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        potLabel.textColor = UIColor.white
+        potLabel.numberOfLines = 0
+        potLabel.font = UIFont(name: "AvenirNext-Regular", size: 20)
+        potLabel.text = "POT MONEY"
+        potLabel.textAlignment = .center
+        
+        moneyLabel.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        moneyLabel.textColor = UIColor.white
+        moneyLabel.font = UIFont(name: "AvenirNext-Regular", size: 20)
+        moneyLabel.text = "$ 10000"
+        moneyLabel.textAlignment = .center
+        
+    }
+    
+    func amountLabelTapped(_ sender: UITapGestureRecognizer) {
+        delegate?.amountLabelTapped(with: self)
     }
     
     func foldButtonTapped() {
@@ -259,6 +301,14 @@ class PlayersTableView: UIView {
             // .once the animation has completed
         })
         
+        
+        
+    }
+    
+    func removeCurrentImages() {
+        
+        frontViewFirstCard.image = nil
+        frontViewSecondCard.image = nil
         
         
     }
